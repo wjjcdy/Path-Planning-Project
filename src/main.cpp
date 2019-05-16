@@ -156,7 +156,7 @@ int main() {
                 }
 
                 if(lane_check == 1 && next_traffic_s > (car_s-8) &&                      //check the car can change two lane pass middle lane 
-                                      next_traffic_s < (car_s + 15))
+                                      next_traffic_s < (car_s + 22))
                 {
                   middle_collision = 1;
                 }
@@ -185,31 +185,30 @@ int main() {
              lane_check_collision_flag[2] == 1)
           {
             ref_vel = front_car_vel * 2.24;                      // keep the speed same with front car
-            lane_next = lane_curr;                               //car need keep the lane
+            lane_next = lane_curr;                               // car need keep the lane
           } 
           else
           {
             if(lane_check_collision_flag[lane_curr] == 1)       
             {
-              if (lane_curr == 0)       //left lane
+              if (lane_curr == 0)       
               {
-                if(lane_check_collision_flag[1] == 0)
+                if(lane_check_collision_flag[1] == 0)           // current lane is left, middle is safe change middle
                 {
                   lane_next = 1;
                 }
                 else if (lane_check_collision_flag[2] == 0 && middle_collision == 0)
                 {
-                  lane_next = 1;
-                  lane_big_change = 1;
-                  ref_vel = 40;
+                  lane_next = 1;                                // current lane is left, middle is litte safe,but right is safe.
+                  ref_vel = 40;                                 // slow a little down, change middle, next time will change right lane
                 }
-                else
+                else                                            // left and middle is unsafe, so keep the lane
                 {
                   ref_vel = front_car_vel * 2.24;
                   lane_next = lane_curr;
                 }
               }
-              else if (lane_curr == 2)  //right lane
+              else if (lane_curr == 2)                          //same with up
               {
                 if(lane_check_collision_flag[1] == 0)
                 {
@@ -218,7 +217,6 @@ int main() {
                 else if (lane_check_collision_flag[0] == 0 && middle_collision == 0)
                 {
                   lane_next = 1;
-                  lane_big_change = 1;
                   ref_vel = 40;
                 }
                 else
@@ -227,7 +225,7 @@ int main() {
                   lane_next = lane_curr;
                 }
               }
-              else                      //middle lane
+              else                         //middle lane is not safe, just change another safe lane
               {
                 if(lane_check_collision_flag[0] == 0)
                 {
@@ -239,7 +237,7 @@ int main() {
                 } 
               }
             }
-            else
+            else                            // curren lane is safe, keep the lane
             {
               lane_next = lane_curr; 
             }
@@ -286,7 +284,7 @@ int main() {
           
          
           static int cout =0;
-          if (lane_next != lane_curr)
+          if (lane_next != lane_curr)           // the car need keep one lane for little time for bigger jerk in d 
           {
             if(cout < 20)
             {
@@ -313,14 +311,6 @@ int main() {
           vector <double> next_pw1 = getXY(car_s+60, 2+lane_next*4, map_waypoints_s, map_waypoints_x, map_waypoints_y);
           vector <double> next_pw2 = getXY(car_s+90, 2+lane_next*4, map_waypoints_s, map_waypoints_x, map_waypoints_y);
           
-          // if(lane_big_change)   //when lane change beyond 1,need add middle lane cross point
-          // {
-          //   vector <double> next_middle = getXY(car_s+25, 2+1*4, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-          //   ptsx.push_back(next_middle[0]);
-          //   ptsy.push_back(next_middle[1]);
-          //   printf("**********add middle lane cross point************8\n");
-          //   next_pw0 = getXY(car_s+50, 2+lane_next*4, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-          // }
           ptsx.push_back(next_pw0[0]);
           ptsx.push_back(next_pw1[0]);
           ptsx.push_back(next_pw2[0]);
@@ -339,7 +329,7 @@ int main() {
           }
 
 
-          if(ref_vel_curr < ref_vel)
+          if(ref_vel_curr < ref_vel)       // limmit speed change
           {
             ref_vel_curr += 0.8;
           }
@@ -347,7 +337,7 @@ int main() {
           {
             ref_vel_curr -= 0.8;
           }
-          if (ref_vel_curr > vel_max)
+          if (ref_vel_curr > vel_max)      // limmit max speed
           {
             ref_vel_curr = vel_max;
           }

@@ -123,44 +123,45 @@ int main() {
           }
           //check car is collision the other car or not in future
           double front_car_vel  = 1000;
-          int lane_check_collision_flag[3] = {0,0,0}; 
-          int middle_collision = 0;
-          for (int offset=0;offset < 3;++offset)
+          int lane_check_collision_flag[3] = {0,0,0};           // each lane safety status
+          int middle_collision = 0;                             // middle lane little safety status
+          for (int lane_index=0;lane_index < 3;++lane_index)    // check each lane safety status
           {
-              int lane_check = offset;
-              if(lane_check>=0 && lane_check<3)
-              {
-                for(int i=0;i<sensor_fusion.size();++i)
+            int lane_check = lane_index;
+            for(int i=0;i<sensor_fusion.size();++i)
+            {
+              double traffic_car_d = sensor_fusion[i][6];
+              if((traffic_car_d > lane_check*4) &&
+                 (traffic_car_d < (lane_check+1)*4))            // check traffic is in check lane or not
+              {              
+                double traffic_car_x_vel = sensor_fusion[i][3];
+                double traffic_car_y_vel = sensor_fusion[i][4];
+                double traffic_car_s = sensor_fusion[i][5];
+                double traffic_vel = sqrt(traffic_car_x_vel*traffic_car_x_vel + 
+                                          traffic_car_y_vel*traffic_car_y_vel);
+                double next_traffic_s = traffic_car_s + prev_size * 0.02 * traffic_vel;  // predict the traffic next s coordinate
+
+                if((lane_check == lane_curr) && next_traffic_s > car_s &&                // predict the traffic in the same with car-self
+                                                next_traffic_s < (car_s + 30))
                 {
-                  double traffic_car_d = sensor_fusion[i][6];
-                  if((traffic_car_d > lane_check*4) && (traffic_car_d < (lane_check+1)*4))
-                  {              
-                    double traffic_car_x_vel = sensor_fusion[i][3];
-                    double traffic_car_y_vel = sensor_fusion[i][4];
-                    double traffic_car_s = sensor_fusion[i][5];
-                    double traffic_vel = sqrt(traffic_car_x_vel*traffic_car_x_vel + traffic_car_y_vel*traffic_car_y_vel);
-                    double next_traffic_s = traffic_car_s + prev_size * 0.02 * traffic_vel; 
-
-                    if((lane_check == lane_curr) && next_traffic_s > car_s && next_traffic_s < (car_s + 30))
-                    {
-                      lane_check_collision_flag[lane_check] = 1;
-                      if(traffic_vel < front_car_vel)
-                      {
-                        front_car_vel = traffic_vel;
-                      }
-                    }
-                    else if(next_traffic_s > (car_s-8) && next_traffic_s < (car_s + 30))
-                    {
-                      lane_check_collision_flag[lane_check] = 1;
-                    }
-
-                    if(lane_check == 1 && next_traffic_s > (car_s-8) && next_traffic_s < (car_s + 15))
-                    {
-                      middle_collision = 1;
-                    }
+                  lane_check_collision_flag[lane_check] = 1;                             // indicate this lane is not safe,set unsafe flag
+                  if(traffic_vel < front_car_vel)                                        // save the lowest speed 
+                  {
+                    front_car_vel = traffic_vel;
                   }
                 }
+                else if(next_traffic_s > (car_s-8) && next_traffic_s < (car_s + 30))     // check this lane is safe or not
+                {
+                  lane_check_collision_flag[lane_check] = 1;
+                }
+
+                if(lane_check == 1 && next_traffic_s > (car_s-8) &&                      //check the car can change two lane pass middle lane 
+                                      next_traffic_s < (car_s + 15))
+                {
+                  middle_collision = 1;
+                }
               }
+            } 
           }
           // if(lane_curr==0)
           //   {
@@ -179,20 +180,16 @@ int main() {
           //                                                     middle_collision);
 
           int change_lane_flag = 0;
-          if(lane_check_collision_flag[0] == 1 &&
+          if(lane_check_collision_flag[0] == 1 &&                //three lanes are all unsafe
              lane_check_collision_flag[1] == 1 &&
              lane_check_collision_flag[2] == 1)
           {
-            ref_vel = front_car_vel * 2.24;
-            lane_next = lane_curr;
+            ref_vel = front_car_vel * 2.24;                      // keep the speed same with front car
+            lane_next = lane_curr;                               //car need keep the lane
           } 
-          // else if (lane_check_collision_flag[1] == 0)
-          // {
-          //   lane_next = 1;
-          // }
           else
           {
-            if(lane_check_collision_flag[lane_curr] == 1)
+            if(lane_check_collision_flag[lane_curr] == 1)       
             {
               if (lane_curr == 0)       //left lane
               {
@@ -242,6 +239,11 @@ int main() {
                 } 
               }
             }
+            else
+            {
+              lane_next = lane_curr; 
+            }
+            
           }
           
           //printf("lane_next = %d,change_lane_flag=%d\n",lane_next,change_lane_flag);

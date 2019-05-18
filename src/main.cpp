@@ -184,7 +184,7 @@ int main() {
              lane_check_collision_flag[1] == 1 &&
              lane_check_collision_flag[2] == 1)
           {
-            ref_vel = front_car_vel * 2.24;                      // keep the speed same with front car
+            ref_vel = front_car_vel * 2.24-0.2;                      // keep the speed same with front car
             lane_next = lane_curr;                               // car need keep the lane
           } 
           else
@@ -204,7 +204,7 @@ int main() {
                 }
                 else                                            // left and middle is unsafe, so keep the lane
                 {
-                  ref_vel = front_car_vel * 2.24;
+                  ref_vel = front_car_vel * 2.24-0.2;
                   lane_next = lane_curr;
                 }
               }
@@ -331,11 +331,11 @@ int main() {
 
           if(ref_vel_curr < ref_vel)       // limmit speed change
           {
-            ref_vel_curr += 0.8;
+            ref_vel_curr += 0.5;
           }
           else if(ref_vel_curr > ref_vel)
           {
-            ref_vel_curr -= 0.8;
+            ref_vel_curr -= 0.5;
           }
           if (ref_vel_curr > vel_max)      // limmit max speed
           {
